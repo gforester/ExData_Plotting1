@@ -1,6 +1,6 @@
 # Generates Plot 4 for Exploratory Data Analysis Project 1 Assignment
 
-library(lubridate)
+ 
 
 # Download and read in file -----------------------------------------------
 
