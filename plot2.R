@@ -1,5 +1,6 @@
 
-        # Generates Plot 2 for Exploratory Data Analysis Project 1 Assignment
+# Generates Plot 2 for Exploratory Data Analysis Project 1 Assignment
+library(data.table)
 
 # Download and read in file -----------------------------------------------
 
@@ -11,28 +12,28 @@
                 unlink("household_power_consumption.zip")  # deletes the zip file
         }
         
-        # read initial 100 rows to determine column class
-        initial <- read.table("household_power_consumption.txt", nrows = 100, sep=";",
-                              stringsAsFactors=FALSE,header=TRUE)
-        classes <- sapply(initial, class)
-        names <- colnames(initial) # vector for col.names in read.table
-        
-        # determine skip and nrow parameters for read.table
-        timeframe=grep("(^1/2/2007)|(^2/2/2007)", readLines("household_power_consumption.txt"))
-        
-        hpc <- read.table(file="household_power_consumption.txt",
-                            colClasses=classes, header=FALSE, sep=";", 
-                            na.string="?", stringsAsFactors=FALSE, col.names=names,
-                            ,skip=min(timeframe),nrows=max(timeframe)-min(timeframe)+1)
-        hpc$DateTime <- paste(hpc$Date, hpc$Time)
-         
-        hpc$DateTime <- strptime(hpc$DateTime, "%d/%m/%Y %H:%M:%S")
+#  quick read to create column names
+initial <- read.table("household_power_consumption.txt", nrows = 5, sep=";",
+                      stringsAsFactors=FALSE,header=TRUE)
+names <- colnames(initial) # vector for col.names
+
+hpc <- fread(input= "household_power_consumption.txt", 
+             na.strings="?", skip="1/2/2007",nrows=2880,
+             colClasses=c("character","character","numeric",
+                          "numeric","numeric","numeric","numeric",
+                          "numeric","numeric"))
+# add colunm names and change date and time fields to R date-time classes
+setnames(hpc,names) 
+hpc$Date <- as.IDate(hpc$Date, format = "%d/%m/%Y")
+hpc$Time <- as.ITime(hpc$Time, format ="%H:%M:%S")
+hpc$DateTime <- as.POSIXct(hpc$Date) + as.ITime(hpc$Time)
+
 # Create Plot -------------------------------------------------------------       
 # Plot 2
 png("plot2.png", width=480, height=480, units ="px" ) 
-plot(Global_active_power ~ as.POSIXct(DateTime), data=hpc, type="n", xlab="",
+plot(Global_active_power ~ DateTime, data=hpc, type="n", xlab="",
      ylab="Global Active Power (kilowatts)")
-lines(Global_active_power ~ as.POSIXct(DateTime), data=hpc, col="black")
+lines(Global_active_power ~ DateTime, data=hpc, col="black")
 dev.off()
 
 

@@ -1,7 +1,5 @@
 # Generates Plot 4 for Exploratory Data Analysis Project 1 Assignment
-
- 
-
+library(data.table)
 # Download and read in file -----------------------------------------------
 
 # download zip file and unzip. Files are written to your current working directory
@@ -12,23 +10,21 @@ if(!file.exists("household_power_consumption.txt")) {
         unlink("household_power_consumption.zip")  # deletes the zip file
 }
 
-# read initial 100 rows to determine column class
-initial <- read.table("household_power_consumption.txt", nrows = 50, sep=";",
+#  quick read to create column names
+initial <- read.table("household_power_consumption.txt", nrows = 5, sep=";",
                       stringsAsFactors=FALSE,header=TRUE)
-classes <- sapply(initial, class)
-names <- colnames(initial) # vector for col.names in read.table
+names <- colnames(initial) # vector for col.names
 
-# determine skip and nrow parameters for read.table
-timeframe <- grep("(^1/2/2007)|(^2/2/2007)", readLines("household_power_consumption.txt"))
-
-hpc <- read.table(file="household_power_consumption.txt",
-                  colClasses=classes, header=FALSE, sep=";", 
-                  na.string="?", stringsAsFactors=FALSE, col.names=names,
-                  ,skip=min(timeframe),nrows=max(timeframe)-min(timeframe)+1)
-hpc$DateTime <- paste(hpc$Date, hpc$Time)
- 
-hpc$DateTime <- strptime(hpc$DateTime, "%d/%m/%Y %H:%M:%S")
-
+hpc <- fread(input= "household_power_consumption.txt", 
+             na.strings="?", skip="1/2/2007",nrows=2880,
+             colClasses=c("character","character","numeric",
+                          "numeric","numeric","numeric","numeric",
+                          "numeric","numeric"))
+# add colunm names and change date and time fields to R date-time classes
+setnames(hpc,names) 
+hpc$Date <- as.IDate(hpc$Date, format = "%d/%m/%Y")
+hpc$Time <- as.ITime(hpc$Time, format ="%H:%M:%S")
+hpc$DateTime <- as.POSIXct(hpc$Date) + as.ITime(hpc$Time)
 
 # Create Plot -------------------------------------------------------------
 
@@ -38,20 +34,20 @@ hpc$DateTime <- strptime(hpc$DateTime, "%d/%m/%Y %H:%M:%S")
 png("plot4.png", width=480, height=480, units ="px" ) 
 par(mfrow = c(2,2))
 
-plot(Global_active_power ~ as.POSIXct(DateTime), data=hpc, type="n", xlab="",
+plot(Global_active_power ~ DateTime, data=hpc, type="n", xlab="",
      ylab="Global Active Power")
-lines(Global_active_power ~ as.POSIXct(DateTime), data=hpc, col="black")
+lines(Global_active_power ~ DateTime, data=hpc, col="black")
 
-plot(Voltage ~ as.POSIXct(DateTime), data=hpc, type="n", xlab="datetime", ylab="Voltage")
-lines(Voltage ~ as.POSIXct(DateTime), data=hpc, col="black")
+plot(Voltage ~ DateTime, data=hpc, type="n", xlab="datetime", ylab="Voltage")
+lines(Voltage ~ DateTime, data=hpc, col="black")
 
-plot(Sub_metering_1 ~ as.POSIXct(DateTime), data = hpc, type="n", ylab="Energy sub metering", xlab="")
-lines(Sub_metering_1 ~ as.POSIXct(DateTime), data=hpc, col ="black") 
-lines(Sub_metering_2 ~ as.POSIXct(DateTime), data=hpc, col="red")
-lines(Sub_metering_3 ~ as.POSIXct(DateTime), data=hpc, col="blue")
+plot(Sub_metering_1 ~ DateTime, data = hpc, type="n", ylab="Energy sub metering", xlab="")
+lines(Sub_metering_1 ~ DateTime, data=hpc, col ="black") 
+lines(Sub_metering_2 ~ DateTime, data=hpc, col="red")
+lines(Sub_metering_3 ~ DateTime, data=hpc, col="blue")
 legend("topright", legend=c("Sub_metering_1","Sub_metering_2","Sub_metering_3")
        ,lty=1,col=c("black","red","blue"), bty="n")
 
-plot(Global_reactive_power ~ as.POSIXct(DateTime), data=hpc, type="n",xlab="datetime")
-lines(Global_reactive_power ~ as.POSIXct(DateTime), data=hpc, col="black")
+plot(Global_reactive_power ~ DateTime, data=hpc, type="n",xlab="datetime")
+lines(Global_reactive_power ~ DateTime, data=hpc, col="black")
 dev.off()
