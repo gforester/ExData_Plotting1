@@ -1,6 +1,7 @@
 
 # Generates Plot 2 for Exploratory Data Analysis Project 1 Assignment
 library(data.table)
+library(lubridate)
 
 # Download and read in file -----------------------------------------------
 
@@ -24,10 +25,8 @@ hpc <- fread(input= "household_power_consumption.txt",
                           "numeric","numeric"))
 # add colunm names and change date and time fields to R date-time classes
 setnames(hpc,names) 
-hpc$Date <- as.IDate(hpc$Date, format = "%d/%m/%Y")
-hpc$Time <- as.ITime(hpc$Time, format ="%H:%M:%S")
-hpc$DateTime <- as.POSIXct(hpc$Date) + as.ITime(hpc$Time)
-
+hpc$DateTime <- dmy_hms(paste(hpc$Date, hpc$Time))
+ 
 # Create Plot -------------------------------------------------------------       
 # Plot 2
 png("plot2.png", width=480, height=480, units ="px" ) 
